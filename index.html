@@ -93,7 +93,7 @@ mount.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0x1b3039,.008);
 const camera = new THREE.PerspectiveCamera(39, mount.clientWidth / Math.max(1,mount.clientHeight), .1, 350);
-camera.position.set(56,29,59);
+camera.position.set(mount.clientWidth<600?92:56,mount.clientWidth<600?47:29,mount.clientWidth<600?98:59);
 const controls = new OrbitControls(camera,renderer.domElement);
 controls.enableDamping = true; controls.dampingFactor = .065;
 controls.minDistance = 12; controls.maxDistance = 145;
@@ -431,7 +431,7 @@ const presets={
 let targetPos=null;
 function setView(name){
  if(name==='reset'){name='threequarters';controls.target.set(0,7,0)}
- targetPos=p(...presets[name]);controls.autoRotate=false;
+ targetPos=p(...presets[name]).multiplyScalar(mount.clientWidth<600?1.6:1);controls.autoRotate=false;
  document.getElementById('rotate').classList.remove('active');
  document.getElementById('rotate').setAttribute('aria-pressed','false');
  for(const btn of document.querySelectorAll('[data-view]'))btn.classList.toggle('selected',btn.dataset.view===name);
