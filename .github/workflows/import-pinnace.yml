@@ -1,0 +1,49 @@
+name: Import high-detail ship model
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/import-pinnace.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download CC0 ship as local asset
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p models
+          curl --fail --location --retry 4 --retry-delay 5 --connect-timeout 30 --max-time 600 \
+            --user-agent 'nave-3d/1.0 (+https://github.com/maryvellous/nave-3d)' \
+            'https://www.innerscene.com/api/library/sailing-pinnace-ship-1aa984c2/download' \
+            -o models/pinnace.glb
+          python3 - <<'PY'
+          from pathlib import Path
+          from struct import unpack
+          f=Path('models/pinnace.glb')
+          data=f.read_bytes()
+          assert 5_000_000 < len(data) < 95_000_000, f'Unusual GLB size: {len(data)}'
+          assert data[:4] == b'glTF', 'Asset is not a GLB'
+          assert unpack('<I',data[8:12])[0] == len(data), 'Incomplete GLB download'
+          print(f'Verified GLB: {len(data):,} bytes')
+          PY
+      - name: Commit vendored, independently hosted CC0 asset
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add models/pinnace.glb
+          if git diff --cached --quiet; then
+            echo "Already present and identical"
+            exit 0
+          fi
+          git commit -m "assets: add detailed 40-metre CC0 sailing pinnace"
+          git push origin HEAD:main
