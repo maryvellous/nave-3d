@@ -130,6 +130,8 @@ function fitCamera(){
 }
 function recalculateHome(recenter){
  if(!ship||!cachedBox)return;
+ const preservedPosition=camera.position.clone();
+ const preservedTarget=controls.target.clone();
  const size=cachedBox.getSize(new THREE.Vector3());
  const maxDimension=Math.max(size.x,size.y,size.z);
  const longAxisX=size.x>=size.z;
@@ -166,8 +168,11 @@ function recalculateHome(recenter){
  if(recenter){
   controls.target.copy(homeTarget);
   camera.position.copy(homePosition);
-  controls.update();
+ }else{
+  camera.position.copy(preservedPosition);
+  controls.target.copy(preservedTarget);
  }
+ controls.update();
 }
 
 function resetCamera(){
@@ -203,8 +208,8 @@ observer.observe(viewport);
 function broadenHullSilhouette(){
  const bounds=new THREE.Box3().setFromObject(ship);
  const dimensions=bounds.getSize(new THREE.Vector3());
- if(dimensions.x>dimensions.z)ship.scale.set(1.23,1.055,1.17);
- else ship.scale.set(1.17,1.055,1.23);
+ if(dimensions.x>dimensions.z)ship.scale.multiply(new THREE.Vector3(1.23,1.055,1.17));
+ else ship.scale.multiply(new THREE.Vector3(1.17,1.055,1.23));
  ship.updateMatrixWorld(true);
 }
 
@@ -313,6 +318,7 @@ function furnishExistingDeck(){
 
 function focusPoint(event){
  if(!ship)return;
+ raycaster.far=Infinity;
  const rect=renderer.domElement.getBoundingClientRect();
  pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
  raycaster.setFromCamera(pointer,camera);
@@ -362,8 +368,8 @@ try{
  });
  scene.add(ship);
  broadenHullSilhouette();
- furnishExistingDeck();
  fitCamera();
+ furnishExistingDeck();
  status.classList.add('dismissed');
  setTimeout(()=>status.remove(),360);
 }catch(error){
