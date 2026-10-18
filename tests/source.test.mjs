@@ -13,6 +13,10 @@ test('minimal galley replacement and interactive controls',()=>{
  assert.match(html,/OrbitControls/);
  assert.match(html,/id="reset"/);
  assert.match(html,/CC BY 4\.0/);
+ assert.match(html,/broadenHullSilhouette/);
+ assert.match(html,/furnishExistingDeck/);
+ assert.match(html,/function focusPoint/);
+ assert.match(html,/function recalculateHome/);
  assert.doesNotMatch(html,/makeHull\(\)|makeRowingDeck\(\)|24 coppie di remi/);
  assert.doesNotMatch(html,/id="views"|id="sails"|id="oars"|id="rotate"|id="labels"/);
 });
