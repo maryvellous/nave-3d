@@ -1,39 +1,38 @@
-# La Galea — Atlante navale 3D
+# Galeone 3D
 
-Web app statica, responsive e interattiva: una ricostruzione **interpretativa** di galea da guerra mediterranea del XVII secolo, costruita tramite geometria procedurale con Three.js. Non è la replica filologica o metrologica di un singolo esemplare.
+Visualizzatore essenziale per osservare e ingrandire un **vero modello 3D di galeone**, con mouse o touch. Nessuna scenografia cosmica: la reference originale riguarda la **struttura della nave** (scafo alto, più ponti, vele quadre, sartiame, poppa elaborata), non l'ambiente circostante.
 
-## Esplora
-- Ruota con mouse/touch, zoom con rotellina/pinch, pan con tasto destro/due dita.
-- Quattro punti di vista (tre quarti, fiancata, prua, dall'alto), ripristino camera.
-- Accendi/spegni vele, remi, rotazione automatica, etichette.
-- Schermo intero e scorciatoie: **R** ripristina, **F** fullscreen.
+La vecchia galea procedurale con remi e decine di controlli è stata completamente eliminata.
 
-## Elementi modellati
-Scafo lungo e sottile con fasciame e modanature, 24 coppie di remi e relativi banchi/strutture esterne, corsia centrale, 2 alberi con vele latine triangolari e manovre, cinque cannoni di prua, sperone, casseretto di poppa con padiglione e decorazioni, accessori di coperta e supporto museale.
+## Comandi
+- Trascina (mouse o dito) per girare attorno al galeone.
+- Rotellina o pinch per zoomare; tasto destro o due dita per spostare il centro della camera.
+- Pulsante discreto ↶ oppure **R** per ripristinare la vista.
+- Unica scritta persistente: attribuzione richiesta dalla licenza del modello.
 
-La geometria è generata in JavaScript senza asset 3D remoti. Le librerie Three.js e OrbitControls vengono caricate da jsDelivr tramite import map.
+## Modello utilizzato
 
-## Avvio locale
-È sufficiente servire la cartella con un server statico, ad esempio:
+**Nautical Galleon** di **R-LAB (rakshaan)**, disponibile su Sketchfab: https://sketchfab.com/3d-models/nautical-galleon-870b8df2456241269cbc030a101edc50
+
+Licenza: **Creative Commons Attribution 4.0 (CC BY 4.0)** — https://creativecommons.org/licenses/by/4.0/
+
+Il GLB si trova in un altro progetto aperto, https://github.com/urcraft/ship-in-a-bottle, che ne documenta l'origine in `public/models/ATTRIBUTION.md` e lo ridistribuisce con accredito a R-LAB. La web app carica il modello da questo progetto (prima dal deploy GitHub Pages, poi dal GitHub Raw / jsDelivr come fallback). **Il file binario GLB non è vendorizzato in questo repository** e il caricamento richiede una connessione e che almeno uno di questi servizi sia disponibile. In caso di fallimento l'app mostra un errore chiaro. Per produzione autonoma e affidabilità massima conviene in seguito archiviare una copia del GLB con attribution nel repo.
+
+Il modellino non è una ricostruzione filologica certificata, ma un asset artistico esterno. Non alteriamo la struttura o la geometria del galeone; il viewer lo centra, regola luce e camera, nasconde solo eventuali podi da esposizione compresi nel GLB.
+
+## Avvio
+Servi la cartella con un server statico, per esempio:
+
 ```bash
 python3 -m http.server 8000
 ```
-Aprire http://localhost:8000. Non usare direttamente file://: i moduli ES richiedono un'origine HTTP(S).
 
-## Deploy gratuito
-**Vercel** → Add New → Project → Importa `maryvellous/nave-3d` → Framework Preset **Other** → Root `./` → Build Command **vuoto** → Output Directory **./** → Deploy.
+Apri `http://localhost:8000/`. Three.js viene caricato da jsDelivr via import map: non ci sono dipendenze di build, Node, database o API.
 
-Oppure **Cloudflare Pages** → Connect to Git → framework **None**, build command vuoto, output `.`.
+## Deploy GitHub Pages
+**Settings → Pages → Deploy from a branch → main → / (root)**.
 
-> Il repository è privato: per connetterlo, concedere al provider di hosting il permesso di leggerlo. Nessun costo backend o database; i limiti dipendono dal piano di hosting scelto.
+Il sito dovrebbe diventare disponibile all'indirizzo https://maryvellous.github.io/nave-3d/.
 
-## Fonti e criteri storici
-La ricostruzione si ispira al tipo generico delle galee mediterranee dell'età moderna (non a una nave nominativa).
-- [Mozaik — Maltese galley (17th century)](https://www.mozaweb.com/en_US/Extra-3D_scenes-Maltese_galley-4736968)
-- [DePaul University — The Galley and the Galleon](https://dpuspecialcollections.omeka.net/exhibits/show/mediterranean/travel/galley)
-- [Renaissance War Galley 1470–1590, Osprey](https://ciia-historia-militar.iniseg.es/administracion/public/uploads/adjuntos/renaissance-war-galley-1470-1590.pdf)
-
-Il numero dei remi, le decorazioni, le proporzioni minute e il rigging sono scelte visuali approssimative. Sono previsti affinamenti e riscontri visivi dopo test browser reali.
-
-## Licenza
-Codice originale destinato al progetto `nave-3d`. Three.js è distribuito con licenza MIT; font web Google Fonts soggetti alle rispettive licenze.
+## Verifiche
+`node --test tests/source.test.mjs` esegue controlli statici. Il workflow GitHub Actions `verify.yml` prova a caricare il GLB in Chromium e conserva screenshot desktop/mobile. Una risposta positiva del test browser è necessaria prima di dichiarare il viewer visivamente verificato.
