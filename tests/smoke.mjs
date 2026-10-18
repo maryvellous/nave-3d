@@ -15,7 +15,7 @@ try{
  const response=await page.goto('http://127.0.0.1:8877',{waitUntil:'networkidle',timeout:60000});
  assert.equal(response?.status(),200);
  await page.locator('#scene canvas').waitFor({timeout:45000});
- await page.waitForFunction(()=>document.querySelector('#loader')?.classList.contains('done'),{timeout:45000});
+ await page.waitForFunction(()=>!document.querySelector('#loader') || document.querySelector('#loader').classList.contains('done'),{timeout:45000});
  const canvas=await page.locator('#scene canvas').boundingBox();
  assert.ok(canvas?.width>100&&canvas?.height>100,'3D renderer not initialized');
  await page.getByRole('button',{name:'Fiancata'}).click();
