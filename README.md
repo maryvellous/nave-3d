@@ -9,7 +9,7 @@ Web app statica, responsive e interattiva: una ricostruzione **interpretativa** 
 - Schermo intero e scorciatoie: **R** ripristina, **F** fullscreen.
 
 ## Elementi modellati
-Scafo lungo e sottile con fasciame e modanature, 24 coppie di remi e relativi banchi/strutture esterne, corsia centrale, 2 alberi con vele latine triangolari e manovre, cinque cannoni di prua, sperone, casseretto di poppa con padiglione e decorazioni, ancore di stile e supporto museale.
+Scafo lungo e sottile con fasciame e modanature, 24 coppie di remi e relativi banchi/strutture esterne, corsia centrale, 2 alberi con vele latine triangolari e manovre, cinque cannoni di prua, sperone, casseretto di poppa con padiglione e decorazioni, accessori di coperta e supporto museale.
 
 La geometria è generata in JavaScript senza asset 3D remoti. Le librerie Three.js e OrbitControls vengono caricate da jsDelivr tramite import map.
 
