@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101c25">
+<meta name="description" content="Esplora in tre dimensioni una galea da guerra mediterranea del XVII secolo: ruota, ingrandisci e scopri i suoi elementi.">
+<title>LA GALEA — Atlante navale 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Forum&display=swap" rel="stylesheet">
+<style>
+:root{font-family:"DM Sans",system-ui,sans-serif;color:#ecdfcb;background:#101c25;font-synthesis:none}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+button{font:inherit;cursor:pointer}button:focus-visible{outline:2px solid #e4b979;outline-offset:4px}
+#app{position:relative;width:100%;height:100%;overflow:hidden;background:radial-gradient(ellipse at 58% 38%,#30424a 0%,#1d2e36 42%,#101c25 100%)}
+#scene{position:absolute;inset:0;touch-action:none}#scene canvas{display:block;outline:0}
+#grain{position:absolute;inset:0;pointer-events:none;opacity:.12;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.28' filter='url(%23n)'/%3E%3C/svg%3E")}
+.topbar{position:absolute;top:0;left:0;right:0;z-index:4;display:flex;align-items:center;justify-content:space-between;padding:26px clamp(20px,4vw,62px);pointer-events:none}
+.topbar>*{pointer-events:auto}.brand{display:flex;align-items:center;gap:12px;color:#f5e8d0;text-decoration:none}.brand-icon{width:32px;height:32px;border:1px solid #c9a976;border-radius:50%;display:grid;place-items:center;font-size:19px}.brand-text{font-size:11px;letter-spacing:.24em;font-weight:700;line-height:1.4;text-transform:uppercase}
+.top-right{display:flex;align-items:center;gap:12px}.edition{font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:#b3ad9f;border-right:1px solid #667079;padding-right:18px}.circle-btn{width:40px;height:40px;border-radius:50%;border:1px solid #6d7474;background:rgba(16,28,37,.52);color:#eadbc3;display:grid;place-items:center;transition:background .2s}.circle-btn:hover{background:#30434a}
+.title-panel{position:absolute;left:clamp(20px,4vw,62px);top:19%;z-index:2;pointer-events:none;max-width:310px;text-shadow:0 2px 20px #10212b}
+.eyebrow{display:flex;align-items:center;gap:13px;font-size:10px;font-weight:700;letter-spacing:.28em;color:#d5ad70;text-transform:uppercase}.eyebrow:before{content:"";display:block;width:27px;height:1px;background:#d5ad70}
+h1{font:normal clamp(64px,8vw,112px)/.98 "Forum",Georgia,serif;letter-spacing:-.045em;margin:20px 0 12px;color:#f4e7d3}
+.subtitle{font:normal 19px/1.35 "Forum",Georgia,serif;color:#d8b98b;letter-spacing:.08em}
+.lead{font-size:12px;line-height:1.9;color:#b7bfc0;max-width:230px;margin:18px 0 0}
+.marker{position:absolute;z-index:3;transform:translate(-50%,-50%);display:flex;align-items:center;gap:7px;pointer-events:none;white-space:nowrap;transition:opacity .15s}.marker.hidden{opacity:0}
+.marker-dot{width:10px;height:10px;border-radius:50%;background:#efce9e;border:2px solid #1c303a;box-shadow:0 0 0 5px #edbf7d44}.marker-label{font-size:10px;color:#f1e7d8;background:#182630e6;border:1px solid #bca37b77;border-radius:5px;padding:7px 10px;letter-spacing:.03em}
+.bottom{position:absolute;left:clamp(20px,4vw,62px);right:clamp(20px,4vw,62px);bottom:clamp(20px,4vh,38px);z-index:5;display:flex;justify-content:space-between;align-items:end;gap:25px;pointer-events:none}.bottom>*{pointer-events:auto}
+.instruction{font-size:11px;color:#c3c7c0;display:flex;align-items:center;gap:13px;line-height:1.6}.mouse-icon{width:30px;height:40px;border:1px solid #a4aaa1;border-radius:18px;position:relative;flex:none}.mouse-icon:after{content:"";position:absolute;left:50%;top:8px;transform:translateX(-50%);width:1px;height:9px;background:#cfb17e}
+.control-panel{background:rgba(14,25,32,.87);border:1px solid #65706e8c;backdrop-filter:blur(18px);border-radius:12px;padding:12px;box-shadow:0 15px 45px #07131966;min-width:min(100%,440px)}
+.control-title{font-size:9px;color:#a9b3ad;letter-spacing:.18em;text-transform:uppercase;margin:2px 7px 11px}.control-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.chip{border:1px solid transparent;background:transparent;color:#b6c0bd;font-size:11px;border-radius:6px;padding:10px 11px;white-space:nowrap;transition:.2s}.chip:hover{background:#34444a;color:#fff}.chip.selected{background:#e4c496;color:#1b292e;font-weight:700}.chip.outline{border-color:#6c7774}
+.sep{height:20px;width:1px;background:#53615e;margin:0 4px}
+.actions{display:flex;gap:6px;margin-top:9px}.action{border:1px solid #516367;background:#24343a;color:#e9e0d1;border-radius:7px;padding:9px 11px;font-size:11px;flex:1}.action:hover{background:#344951}.action.active{border-color:#d5b27d;color:#f5d9a8}
+.details{position:absolute;z-index:3;left:clamp(20px,4vw,62px);bottom:32%;width:232px;pointer-events:none}.details:before{content:"";display:block;background:#9d866b;height:1px;width:42px;margin-bottom:15px}
+.details-title{font:normal 22px "Forum",serif;color:#ebdec7}.details-sub{font-size:11px;color:#9fb0b1;line-height:1.75;margin-top:5px}
+.loader{position:absolute;z-index:9;inset:0;display:grid;place-items:center;background:#101c25;transition:opacity .7s}.loader.done{opacity:0;pointer-events:none}.loader-inner{text-align:center;color:#e9d5b2}.loader-symbol{font:48px "Forum",serif;animation:pulse 1.4s infinite}.loader-text{font-size:10px;letter-spacing:.24em;text-transform:uppercase;margin-top:20px}@keyframes pulse{50%{opacity:.35}}
+.credit{position:absolute;z-index:2;right:clamp(20px,4vw,62px);top:92px;text-align:right;font-size:10px;letter-spacing:.08em;color:#9da9ab;line-height:1.8;pointer-events:none}
+.credit strong{color:#d7c4a9;font-weight:500}
+@media(max-width:900px){.title-panel{top:110px;max-width:220px}h1{font-size:68px}.lead{display:none}.details{bottom:180px}.credit{display:none}.instruction{display:none}.bottom{justify-content:center}.control-panel{width:min(100%,460px)}}
+@media(max-width:600px){.topbar{padding:17px 20px}.edition{display:none}.title-panel{top:76px;left:20px}.eyebrow{font-size:8px}h1{font-size:54px;margin:9px 0 2px}.subtitle{font-size:14px}.details{bottom:197px;left:20px;width:160px}.details-title{font-size:18px}.details-sub{font-size:10px}.bottom{left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom))}.control-panel{padding:9px}.chip{font-size:10px;padding:9px 8px}.action{font-size:10px;padding:9px 6px}.control-title{margin-bottom:7px}.sep{margin:0 2px}.marker-label{font-size:9px;padding:5px}.marker{gap:4px}}
+@media(max-height:650px){.title-panel{top:78px}.details{display:none}.control-title{display:none}}
+@media(prefers-reduced-motion:reduce){.loader-symbol{animation:none}*{scroll-behavior:auto!important;transition:none!important}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<main id="app">
+<div id="scene" aria-label="Modello tridimensionale interattivo di galea mediterranea"></div><div id="grain"></div>
+<header class="topbar">
+<a href="#" class="brand" aria-label="Atlante Navale 3D"><span class="brand-icon" aria-hidden="true">✧</span><span class="brand-text">ATLANTE<br>NAVALE 3D</span></a>
+<div class="top-right"><span class="edition">Collezione navale · 01</span><button id="fullscreen" class="circle-btn" aria-label="Schermo intero" title="Schermo intero">⛶</button></div>
+</header>
+<div class="title-panel"><div class="eyebrow">Mediterraneo · XVII secolo</div><h1>La Galea</h1><div class="subtitle">Vento, remi e polvere da sparo.</div><p class="lead">Una ricostruzione tridimensionale interpretativa della nave da guerra che dominò il Mediterraneo.</p></div>
+<div class="credit"><strong>MODELLO PROCEDURALE ORIGINALE</strong><br>24 coppie di remi · 2 alberi latini<br>Ricostruzione ispirata alle galee seicentesche</div>
+<div class="details"><div class="details-title">Esplora ogni dettaglio</div><div class="details-sub">Ruota per osservare lo scafo. Avvicinati per scoprire i banchi dei rematori, le vele e la poppa.</div></div>
+<div id="markers" aria-hidden="true"></div>
+<footer class="bottom">
+<div class="instruction"><span class="mouse-icon" aria-hidden="true"></span><span>Trascina per ruotare<br>Scorri per ingrandire · Tasto destro per spostare</span></div>
+<div class="control-panel">
+<div class="control-title">Inquadratura</div>
+<div class="control-row" id="views"><button class="chip selected" data-view="threequarters">3/4</button><button class="chip" data-view="profile">Fiancata</button><button class="chip" data-view="bow">Prua</button><button class="chip" data-view="top">Dall'alto</button><span class="sep"></span><button class="chip outline" data-view="reset" title="Ripristina vista">↺ Ripristina</button></div>
+<div class="actions"><button class="action active" id="sails" aria-pressed="true">◈ Vele</button><button class="action active" id="oars" aria-pressed="true">≋ Remi</button><button class="action" id="rotate" aria-pressed="false">↻ Rotazione</button><button class="action" id="labels" aria-pressed="false">⌖ Dettagli</button></div>
+</div>
+</footer>
+<div class="loader" id="loader"><div class="loader-inner"><div class="loader-symbol">✧</div><div class="loader-text">Allestimento del modello…</div></div></div>
+</main>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const mount = document.getElementById('scene');
+const loader = document.getElementById('loader');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, powerPreference:'high-performance' });
+} catch(error) {
+  loader.querySelector('.loader-symbol').textContent = '!';
+  loader.querySelector('.loader-text').textContent = 'WebGL non disponibile su questo dispositivo.';
+  throw error;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(mount.clientWidth, mount.clientHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.65;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+mount.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x1b3039,.008);
+const camera = new THREE.PerspectiveCamera(39, mount.clientWidth / Math.max(1,mount.clientHeight), .1, 350);
+camera.position.set(56,29,59);
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = .065;
+controls.minDistance = 12; controls.maxDistance = 145;
+controls.maxPolarAngle = Math.PI*.93;
+controls.target.set(0,7,0);
+controls.zoomSpeed = .9;
+controls.update();
+scene.add(new THREE.HemisphereLight(0xcde1ed,0x3c2b1c,2.65));
+const keyLight = new THREE.DirectionalLight(0xffddb0,4.4);
+keyLight.position.set(-22,38,37); keyLight.castShadow=true;
+keyLight.shadow.mapSize.set(2048,2048);
+keyLight.shadow.camera.left=-48;keyLight.shadow.camera.right=48;
+keyLight.shadow.camera.top=48;keyLight.shadow.camera.bottom=-48;
+keyLight.shadow.bias=-.0005;
+scene.add(keyLight);
+const fill = new THREE.DirectionalLight(0x9ccbd6,2.3);fill.position.set(24,12,-35);scene.add(fill);
+const rim = new THREE.DirectionalLight(0xf5c48a,1.4);rim.position.set(25,22,30);scene.add(rim);
+
+const mat = (color,roughness=0.82,metalness=0) => new THREE.MeshStandardMaterial({color,roughness,metalness});
+const M = {
+ hull:mat(0x572e29), bottom:mat(0x372723), red:mat(0x8a3931), redDark:mat(0x622b2a),
+ wood:mat(0x9a663f), lightWood:mat(0xbd9061), plank:mat(0x8e684b), rail:mat(0x6c3e2e),
+ mast:mat(0x956a43), oar:mat(0xae8b59), blade:mat(0xc0a06d), gold:mat(0xe2b974,.4,.58),
+ bronze:mat(0x88744f,.36,.78), bronzeDark:mat(0x403f35,.37,.8),
+ rope:mat(0x8a7356), pale:mat(0xe8d9b7), window:mat(0x1b292b,.24,.24),
+ silk:mat(0x8c3331), black:mat(0x322c29)
+};
+const ship = new THREE.Group();scene.add(ship);
+const sailParts=new THREE.Group(),oarParts=new THREE.Group();
+ship.add(sailParts,oarParts);
+const p=(x,y,z)=>new THREE.Vector3(x,y,z);
+function add(mesh,parent=ship){parent.add(mesh);if(mesh.isMesh){mesh.castShadow=true;mesh.receiveShadow=true}return mesh}
+function box(w,h,d,x,y,z,material,parent=ship){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);mesh.position.set(x,y,z);return add(mesh,parent)}
+function cyl(a,b,r1,r2,material,parent=ship,segments=9){
+ const vec=b.clone().sub(a), mesh=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,vec.length(),segments),material);
+ mesh.position.copy(a).add(b).multiplyScalar(.5);
+ mesh.quaternion.setFromUnitVectors(p(0,1,0),vec.normalize());
+ return add(mesh,parent);
+}
+function sphere(x,y,z,r,material,parent=ship){const obj=new THREE.Mesh(new THREE.SphereGeometry(r,12,8),material);obj.position.set(x,y,z);return add(obj,parent)}
+function rope(points,material=M.rope,r=.018,parent=ship){
+ const c=new THREE.CatmullRomCurve3(points.map(q=>p(...q)));
+ return add(new THREE.Mesh(new THREE.TubeGeometry(c,Math.max(8,points.length*8),r,5,false),material),parent);
+}
+function customMesh(vertices,indices,material,parent=ship,colors){
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+ geometry.setIndex(indices);
+ if(colors)geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ geometry.computeVertexNormals();
+ return add(new THREE.Mesh(geometry,material),parent);
+}
+const stations=[
+ [-25.5,.2],[-24,1.35],[-22,2.15],[-19.5,2.73],[-16,2.95],[-10,3.03],[-3,3.12],
+ [4,3.10],[11,2.91],[17,2.60],[20.5,2.13],[23,1.25],[25,.2]
+];
+function widthAt(x){
+ for(let i=1;i<stations.length;i++)if(x<=stations[i][0]){
+ const a=stations[i-1],b=stations[i],t=(x-a[0])/(b[0]-a[0]);
+ return THREE.MathUtils.lerp(a[1],b[1],Math.max(0,Math.min(1,t)));
+ }
+ return .2;
+}
+function makeHull(){
+ const sections=stations.map(([x,w])=>[
+ [x,1.04,-w*.96],[x,.47,-w],[x,-.45,-w*.86],
+ [x,-1.46,-w*.63],[x,-2.57,-w*.20],
+ [x,-2.57,w*.20],[x,-1.46,w*.63],[x,-.45,w*.86],[x,.47,w],[x,1.04,w*.96]
+ ]);
+ const vertices=sections.flat(2), indices=[], count=sections[0].length;
+ for(let i=0;i<sections.length-1;i++)for(let j=0;j<count;j++){
+  const a=i*count+j,b=(i+1)*count+j,c=(i+1)*count+(j+1)%count,d=i*count+(j+1)%count;
+  indices.push(a,b,d,b,c,d);
+ }
+ customMesh(vertices,indices,new THREE.MeshStandardMaterial({color:0x633a32,side:THREE.DoubleSide,roughness:.76}));
+ // Flush-planked deck, edged with dark bulwarks.
+ const shape=new THREE.Shape();
+ shape.moveTo(stations[0][0],-stations[0][1]*.93);
+ stations.slice(1).forEach(s=>shape.lineTo(s[0],-s[1]*.93));
+ stations.slice().reverse().forEach(s=>shape.lineTo(s[0],s[1]*.93));
+ shape.closePath();
+ const deck=new THREE.Mesh(new THREE.ShapeGeometry(shape),M.plank);
+ deck.rotation.x=Math.PI/2;deck.position.y=1.075;
+ deck.material.side=THREE.DoubleSide;add(deck);
+ for(let z=-2.6;z<=2.6;z+=.34){
+  const points=[];
+  for(let x=-24.5;x<=24.2;x+=1.5)if(Math.abs(z)<widthAt(x)*.9)points.push([x,1.086,z]);
+  if(points.length>2)rope(points,M.rail,.009);
+ }
+ // Longitudinal strakes, rub-rails and gold molding on both sides.
+ for(const side of [-1,1]){
+  for(const [y,factor,material,rad] of [
+   [.92,.975,M.gold,.075],[.35,1.015,M.wood,.105],
+   [-.25,.91,M.gold,.034],[-1.18,.70,M.rail,.105],[-1.83,.46,M.lightWood,.04]
+  ]){
+   rope(stations.slice(1,-1).map(([x,w])=>[x,y,side*w*factor]),material,rad);
+  }
+  for(let x=-21;x<23;x+=1.2){
+   const w=widthAt(x);
+   cyl(p(x,-1.96,side*w*.45),p(x,.87,side*w*.98),.031,.044,M.rail);
+  }
+ }
+ rope(stations.map(([x])=>[x,-2.76,0]),M.bottom,.15);
+ // Upper bow and the prominent boarding spur.
+ cyl(p(23.5,.5,0),p(31.2,.38,0),.23,.08,M.wood);
+ cyl(p(23.5,.72,-.42),p(29.8,.42,0),.085,.035,M.gold);
+ cyl(p(23.5,.72,.42),p(29.8,.42,0),.085,.035,M.gold);
+ for(let x=25;x<29;x+=.95)box(.11,.08,.65-(x-25)*.10,x,.55,0,M.gold);
+ // Bent ornamental scroll, not a figurehead from a specific historical ship.
+ rope([[24.1,.7,0],[24.8,1.65,0],[25.7,1.95,0],[26.2,1.55,0]],M.gold,.095);
+ sphere(26.2,1.55,0,.14,M.gold);
+}
+function makeRowingDeck(){
+ // Elevated central corsia, the lengthwise walkway typical of a galley.
+ box(39,.25,1.25,-.5,1.36,0,M.wood);
+ for(const side of [-1,1]){
+  rope([[-20,1.5,side*.69],[0,1.5,side*.69],[19,1.5,side*.69]],M.gold,.047);
+  // Apostis: long outer beam used as fulcrum by the oars.
+  cyl(p(-19,1.19,side*3.43),p(19,1.19,side*3.43),.145,.145,M.rail);
+  cyl(p(-19,1.39,side*3.52),p(19,1.39,side*3.52),.055,.055,M.gold);
+  for(let k=0;k<24;k++){
+   const x=-17.2+k*1.47;
+   // Each bench serves the rowers on a single oar.
+   box(.18,.12,1.86,x,1.25,side*1.89,M.lightWood);
+   box(.13,.44,.14,x,1.0,side*2.66,M.rail);
+   box(.13,.40,.14,x,1.0,side*1.02,M.rail);
+   // Sloping oars with long shafts and widened blades.
+   const inner=p(x+.16,1.33,side*1.8), hinge=p(x-.10,1.4,side*3.48),outer=p(x-1.48,-.20,side*9.2);
+   cyl(inner,outer,.09,.056,M.oar,oarParts,7);
+   const blade=cyl(p(x-1.42,-.17,side*8.85),p(x-1.76,-.34,side*10.30),.20,.13,M.blade,oarParts,8);
+   blade.scale.x=2.25;
+   sphere(hinge.x,hinge.y,hinge.z,.13,M.gold,oarParts);
+   // Vertical outrigger brackets and walking rail above oars.
+   if(k%2===0){
+    cyl(p(x,.91,side*2.82),p(x,1.65,side*3.57),.035,.035,M.rail);
+    cyl(p(x,1.67,side*3.57),p(x,2.04,side*3.57),.044,.044,M.gold);
+   }
+  }
+  cyl(p(-18.6,2.03,side*3.58),p(18.3,2.03,side*3.58),.042,.042,M.wood);
+  // Narrow gunwale and repeated ornamental elements.
+  for(let x=-18;x<18;x+=2.94){
+   box(.33,.10,.25,x,1.58,side*3.5,M.gold);
+  }
+ }
+ // Grates down the central gangway.
+ for(let x=-16.8;x<18;x+=4.7){
+  box(1.65,.035,.79,x,1.51,0,M.rail);
+  for(let j=-3;j<=3;j++)box(1.45,.049,.045,x,1.544,j*.10,M.lightWood);
+ }
+}
+function makeCannons(){
+ // Forward-facing battery: a heavy center gun and four smaller bronze pieces.
+ box(5.5,.35,4.35,20.2,1.52,0,M.wood);
+ for(let j=-2;j<=2;j++){
+  const z=j*.84,main=j===0;
+  box(1.3,.24,.48,21.2,1.85,z,M.rail);
+  for(const dz of [-.22,.22])sphere(20.75,1.79,z+dz,.17,M.wood);
+  const start=p(20.75,2.05,z),end=p(main?24.5:23.65,2.08,z);
+  cyl(start,end,main?.23:.145,main?.17:.10,M.bronze,ship,12);
+  cyl(p(main?24.26:23.43,2.08,z),p(main?24.46:23.64,2.08,z),
+     main?.25:.17,main?.25:.17,M.gold,ship,12);
+ }
+ for(const side of [-1,1]){
+  for(let x=18;x<=21;x+=1.4){
+   cyl(p(x,1.62,side*2.34),p(x,2.14,side*2.34),.042,.042,M.gold);
+  }
+  cyl(p(17.8,2.14,side*2.34),p(21.6,2.14,side*1.48),.055,.055,M.wood);
+ }
+}
+function makeStern(){
+ // Raised aft quarterdeck and ornate captain's awning.
+ box(7.0,.30,5.0,-21.0,1.65,0,M.wood);
+ for(let i=0;i<9;i++)box(6.8,.022,.033,-21.0,1.816,-2.1+i*.52,M.rail);
+ for(const side of [-1,1]){
+  for(const x of [-24.4,-22.8,-21.2,-19.6,-18.2]){
+   cyl(p(x,1.9,side*2.47),p(x,2.65,side*2.47),.063,.049,M.gold);
+   sphere(x,2.69,side*2.47,.11,M.gold);
+  }
+  cyl(p(-24.4,2.61,side*2.48),p(-18.2,2.61,side*2.48),.061,.061,M.gold);
+ }
+ for(const x of [-24.1,-19.15])for(const side of [-1,1]){
+  cyl(p(x,1.84,side*2.2),p(x,4.05,side*2.2),.115,.09,M.wood);
+  sphere(x,4.12,side*2.2,.135,M.gold);
+ }
+ // Red silk canopy with a gently cambered roof.
+ const verts=[],inds=[];
+ for(let i=0;i<=12;i++)for(let j=0;j<=8;j++){
+  const x=-24.4+i*.47,z=-2.55+j*.64;
+  const y=4.13+.20*Math.sin(Math.PI*i/12)+.32*Math.sin(Math.PI*j/8);
+  verts.push(x,y,z);
+  if(i<12&&j<8){
+   const a=i*9+j,b=a+9;inds.push(a,b,a+1,b,b+1,a+1);
+  }
+ }
+ customMesh(verts,inds,new THREE.MeshStandardMaterial({color:0x8c3130,roughness:1,side:THREE.DoubleSide}));
+ for(const side of [-1,1])rope([[-24.5,4.14,side*2.55],[-21.3,4.37,side*2.55],[-18.8,4.14,side*2.55]],M.gold,.072);
+ rope([[-24.45,4.12,-2.55],[-24.45,4.12,0],[-24.45,4.12,2.55]],M.gold,.065);
+ // Aft transom windows framed in gold and richly colored wood.
+ box(.30,2.12,4.4,-24.7,2.57,0,M.redDark);
+ for(let z=-1.57;z<=1.58;z+=1.05){
+  box(.105,.9,.73,-24.87,2.79,z,M.gold);
+  box(.12,.67,.52,-24.94,2.79,z,M.window);
+  box(.13,.06,.59,-25.01,2.81,z,M.gold);
+ }
+ for(let z=-2.2;z<=2.2;z+=.55)box(.12,.07,.36,-24.9,1.75,z,M.gold);
+ // Helm/tiller and lanterns.
+ cyl(p(-22,1.94,0),p(-19.7,2.38,0),.075,.058,M.wood);
+ for(const side of [-1,1]){
+  cyl(p(-24.8,2.9,side*2.33),p(-24.8,4.77,side*2.33),.05,.045,M.gold);
+  const lantern=box(.4,.64,.4,-24.8,4.83,side*2.33,M.gold);
+  box(.29,.43,.29,-24.8,4.84,side*2.33,M.window);
+  sphere(-24.8,5.18,side*2.33,.16,M.gold);
+ }
+}
+function makeMast({x,height,sparLow,sparHigh,sailFoot,side=1,shade=0}){
+ const root=p(x,1.32,0),head=p(x,height,0);
+ cyl(root,head,.37,.13,M.mast,ship,11);
+ for(const y of [height*.34,height*.59,height*.81]){
+  cyl(p(x-.12,y,0),p(x+.12,y,0),.42,.4,M.rail);
+ }
+ sphere(x,height,0,.23,M.gold);
+ // Lateen yard is diagonal fore-and-aft, not a square-sail cross spar.
+ const a=p(x+sparLow[0],sparLow[1],side*.54);
+ const b=p(x+sparHigh[0],sparHigh[1],side*.54);
+ cyl(a,b,.16,.10,M.mast,sailParts,10);
+ const clew=p(x+sailFoot[0],sailFoot[1],side*1.6);
+ // Subdivide the triangular sail for curved cloth and sewn-panel shading.
+ const sailMaterial=new THREE.MeshStandardMaterial({
+  vertexColors:true,side:THREE.DoubleSide,roughness:.96,metalness:0
+ });
+ const N=18,vertices=[],colors=[],inds=[];
+ function vertex(i,j){
+  const u=i/N,v=j/N,w=1-u-v;
+  const pt=a.clone().multiplyScalar(w).addScaledVector(b,u).addScaledVector(clew,v);
+  pt.z+=side*(Math.sin(Math.PI*u)*Math.sin(Math.PI*v)*.92 + Math.sin(Math.PI*w)*.18);
+  return pt;
+ }
+ const loc=new Map();
+ for(let i=0;i<=N;i++)for(let j=0;j<=N-i;j++){
+  const pt=vertex(i,j);loc.set(i+','+j,vertices.length/3);
+  vertices.push(pt.x,pt.y,pt.z);
+  const mottled=.89+.06*Math.sin(j*1.7+i*.56)+.035*Math.cos(i*2.1-j*.88)-shade;
+  colors.push(mottled, mottled*.955, mottled*.83);
+ }
+ for(let i=0;i<N;i++)for(let j=0;j<N-i;j++){
+  const a0=loc.get(i+','+j),b0=loc.get((i+1)+','+j),c0=loc.get(i+','+(j+1));
+  inds.push(a0,b0,c0);
+  if(i+j<N-1){const d0=loc.get((i+1)+','+(j+1));inds.push(b0,d0,c0)}
+ }
+ customMesh(vertices,inds,sailMaterial,sailParts,colors);
+ // Reinforced edges and stitched panel seams.
+ for(const [v1,v2] of [[a,b],[b,clew],[clew,a]]){
+  rope([v1.toArray(),v2.toArray()],M.rope,.028,sailParts);
+ }
+ for(let t=1;t<10;t++){
+  const f=t/10;
+  const from=a.clone().lerp(clew,f);
+  const to=b.clone().lerp(clew,f);
+  const mid=from.clone().lerp(to,.5);
+  mid.z+=side*.35;
+  rope([from.toArray(),mid.toArray(),to.toArray()],M.rope,.009,sailParts);
+ }
+ // Standing rigging: shrouds, forestays, halyards and braces.
+ for(const s of [-1,1])for(const shift of [-2.4,0,2.4]){
+  rope([[x,height-.6,0],[x+shift*.35,height*.53,s*.75],[x+shift,1.55,s*widthAt(x+shift)*.9]],M.rope,.025);
+ }
+ rope([[x,height,0],[x+9,1.25,0]],M.rope,.026);
+ rope([[x,height,0],[x-9,1.7,0]],M.rope,.024);
+ rope([a.toArray(),[x+sparLow[0]+1.5,1.28,side*2.7]],M.rope,.021,sailParts);
+ rope([b.toArray(),[x+sparHigh[0]-2,1.35,-side*2.4]],M.rope,.022,sailParts);
+ rope([clew.toArray(),[x+sailFoot[0]-1.5,1.3,side*2.65]],M.rope,.022,sailParts);
+}
+function details(){
+ // Mooring bitts, rings, timber uprights and rope coils.
+ for(const x of [-18.5,17.5]){
+  for(const side of [-1,1]){
+   box(.22,.55,.19,x,1.66,side*.85,M.rail);
+   cyl(p(x-.3,1.84,side*.85),p(x+.3,1.84,side*.85),.068,.068,M.gold);
+  }
+ }
+ for(const x of [-21.5,-19.2,16.4]){
+  const mesh=new THREE.Mesh(new THREE.TorusGeometry(.36,.046,7,26),M.rope);
+  mesh.rotation.x=Math.PI/2;mesh.position.set(x,1.9,-1.1);
+  add(mesh);
+ }
+ // Three spare oars stowed alongside the central walkway.
+ for(let z=-.27;z<=.27;z+=.27)cyl(p(-16.5,1.62,z),p(-7.8,1.62,z),.055,.041,M.oar);
+ // Decorative raised stern escutcheon.
+ sphere(-25.02,2.02,0,.26,M.gold);
+ const crest=new THREE.Mesh(new THREE.TorusGeometry(.33,.055,7,24),M.gold);
+ crest.rotation.y=Math.PI/2;crest.position.set(-25.02,2.04,0);add(crest);
+}
+makeHull();makeRowingDeck();makeCannons();makeStern();
+makeMast({x:-3.7,height:19.8,sparLow:[9.2,8.0],sparHigh:[-12.0,20.6],sailFoot:[-12.3,4.1],side:1});
+makeMast({x:13.7,height:14.8,sparLow:[7.2,7.1],sparHigh:[-7.5,15.6],sailFoot:[-8.0,3.5],side:-1,shade:.045});
+details();
+
+// A discreet museum-style support and an untextured plinth.
+const plinthMaterial=mat(0x19272c,.72,.28);
+box(64,1.0,23,0,-4.95,0,plinthMaterial).castShadow=false;
+box(64.5,.18,23.5,0,-4.4,0,M.bronzeDark).castShadow=false;
+for(const x of [-17,17])box(1.25,1.5,2.2,x,-3.47,0,plinthMaterial);
+const ground=box(200,.1,200,0,-5.53,0,mat(0x15252e));
+ground.receiveShadow=true;ground.castShadow=false;
+
+// Scene annotations are optional and intentionally hidden at first.
+const hotspotData=[
+ {text:'Vela latina',pos:p(-8.6,12.0,1.15)},
+ {text:'Corsia centrale',pos:p(0,1.7,0)},
+ {text:'Batteria di prua',pos:p(21.5,2.5,0)},
+ {text:'24 coppie di remi',pos:p(6.4,.2,7.4)},
+ {text:'Padiglione di poppa',pos:p(-21,4.2,0)}
+];
+const markerRoot=document.getElementById('markers');
+hotspotData.forEach(entry=>{
+ const el=document.createElement('div');el.className='marker hidden';
+ const dot=document.createElement('span');dot.className='marker-dot';
+ const label=document.createElement('span');label.className='marker-label';label.textContent=entry.text;
+ el.append(dot,label);markerRoot.append(el);entry.element=el;
+});
+let showLabels=false;
+function updateMarkers(){
+ if(!showLabels)return;
+ for(const mark of hotspotData){
+  const pt=mark.pos.clone().project(camera);
+  const visible=pt.z>-1&&pt.z<1;
+  mark.element.classList.toggle('hidden',!visible);
+  if(visible){mark.element.style.left=((pt.x+1)*.5*mount.clientWidth)+'px';mark.element.style.top=((-pt.y+1)*.5*mount.clientHeight)+'px';}
+ }
+}
+// Camera presets intentionally leave the model fixed.
+const presets={
+ threequarters:[56,29,59],profile:[0,15,83],bow:[83,14,0],top:[.001,88,.001]
+};
+let targetPos=null;
+function setView(name){
+ if(name==='reset'){name='threequarters';controls.target.set(0,7,0)}
+ targetPos=p(...presets[name]);controls.autoRotate=false;
+ document.getElementById('rotate').classList.remove('active');
+ document.getElementById('rotate').setAttribute('aria-pressed','false');
+ for(const btn of document.querySelectorAll('[data-view]'))btn.classList.toggle('selected',btn.dataset.view===name);
+}
+document.querySelectorAll('[data-view]').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.view)));
+function toggle(id,object){
+ const el=document.getElementById(id);
+ const active=!el.classList.contains('active');
+ el.classList.toggle('active',active);el.setAttribute('aria-pressed',String(active));
+ if(object)object.visible=active;
+ return active;
+}
+document.getElementById('sails').addEventListener('click',()=>toggle('sails',sailParts));
+document.getElementById('oars').addEventListener('click',()=>toggle('oars',oarParts));
+document.getElementById('rotate').addEventListener('click',()=>{
+ const active=toggle('rotate');
+ controls.autoRotate=active;controls.autoRotateSpeed=.55;
+});
+document.getElementById('labels').addEventListener('click',()=>{
+ showLabels=toggle('labels');
+ if(!showLabels)hotspotData.forEach(x=>x.element.classList.add('hidden'));
+});
+document.getElementById('fullscreen').addEventListener('click',async()=>{
+ try{
+ if(document.fullscreenElement)await document.exitFullscreen();
+ else await document.getElementById('app').requestFullscreen();
+ }catch(err){console.warn('Schermo intero non disponibile',err)}
+});
+window.addEventListener('keydown',e=>{
+ if(e.target instanceof HTMLInputElement)return;
+ if(e.key.toLowerCase()==='r')setView('reset');
+ if(e.key.toLowerCase()==='f')document.getElementById('fullscreen').click();
+});
+controls.addEventListener('start',()=>targetPos=null);
+function resize(){
+ const w=mount.clientWidth,h=mount.clientHeight;
+ camera.aspect=w/Math.max(1,h);
+ // Wider view on small portrait screens: keep the whole ship reachable.
+ camera.fov=w<600?49:39;
+ camera.updateProjectionMatrix();renderer.setSize(w,h);renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+}
+window.addEventListener('resize',resize);
+resize();
+const clock=new THREE.Clock();
+function animate(){
+ requestAnimationFrame(animate);
+ const dt=Math.min(clock.getDelta(),.05);
+ if(targetPos){
+  camera.position.lerp(targetPos,Math.min(1,dt*2.8));
+  if(camera.position.distanceTo(targetPos)<.05)targetPos=null;
+ }
+ controls.update();
+ updateMarkers();
+ renderer.render(scene,camera);
+}
+animate();
+requestAnimationFrame(()=>{loader.classList.add('done');setTimeout(()=>loader.remove(),750)});
+</script>
+</body>
+</html>
