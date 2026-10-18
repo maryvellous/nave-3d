@@ -60,7 +60,9 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.setSize(viewport.clientWidth,viewport.clientHeight);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.65;
+renderer.toneMappingExposure=1.3;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 viewport.appendChild(renderer.domElement);
 
 const scene=new THREE.Scene();
@@ -74,15 +76,27 @@ controls.rotateSpeed=.72;
 controls.zoomSpeed=.8;
 controls.maxPolarAngle=Math.PI-.02;
 
-scene.add(new THREE.HemisphereLight(0xe9eef1,0x8a7260,3.2));
-const key=new THREE.DirectionalLight(0xffedd5,4.2);key.position.set(-20,31,26);scene.add(key);
-const fill=new THREE.DirectionalLight(0xc5e5f3,3.1);fill.position.set(27,14,-23);scene.add(fill);
-const rim=new THREE.DirectionalLight(0xffffff,2);rim.position.set(4,37,-8);scene.add(rim);
+scene.add(new THREE.HemisphereLight(0xf6f1e8,0x756a5a,1.95));
+const key=new THREE.DirectionalLight(0xffe5bf,3.55);
+key.position.set(-20,31,26);
+key.castShadow=true;
+key.shadow.mapSize.set(innerWidth<700?1024:2048,innerWidth<700?1024:2048);
+key.shadow.bias=-0.00012;
+key.shadow.normalBias=.012;
+key.shadow.radius=2;
+scene.add(key);
+const fill=new THREE.DirectionalLight(0xc8d9e4,1.55);fill.position.set(27,14,-23);scene.add(fill);
+const rim=new THREE.DirectionalLight(0xffdeb2,.8);rim.position.set(4,37,-8);scene.add(rim);
 
 let homePosition=new THREE.Vector3(22,14,24);
 let homeTarget=new THREE.Vector3();
 let homeDistance=40;
 let ship=null;
+let hasUserMovedCamera=false;
+const raycaster=new THREE.Raycaster();
+const pointer=new THREE.Vector2();
+const deckDetails=new THREE.Group();
+scene.add(deckDetails);
 
 // Modello completo di terze parti, non la vecchia geometria procedurale.
 // Nautical Galleon — R-LAB (rakshaan), Sketchfab, CC BY 4.0.
@@ -101,35 +115,61 @@ async function loadGalleon(){
  }
  throw lastError||new Error('Nessuna origine disponibile per il modello 3D');
 }
+// Center once: fitting every time the viewport resizes used to move the ship
+// while the user was exploring it.
+let cachedBox=null;
 function fitCamera(){
  if(!ship)return;
  const box=new THREE.Box3().setFromObject(ship);
  if(box.isEmpty())throw new Error('Modello 3D vuoto');
  const center=box.getCenter(new THREE.Vector3());
- const size=box.getSize(new THREE.Vector3());
  ship.position.sub(center);
  ship.updateMatrixWorld(true);
- const refit=new THREE.Box3().setFromObject(ship);
- const sphere=refit.getBoundingSphere(new THREE.Sphere());
- const maxDimension=Math.max(size.x,size.y,size.z);
- homeTarget.set(0,0,0);
- const aspect=Math.max(.2,viewport.clientWidth/Math.max(1,viewport.clientHeight));
- const verticalFov=THREE.MathUtils.degToRad(camera.fov);
- const effectiveFov=2*Math.atan(Math.tan(verticalFov/2)*Math.min(1,aspect));
- homeDistance=Math.max(maxDimension*.95,sphere.radius/Math.sin(effectiveFov/2)*1.18);
- // Three-quarter view: length axis is detected, so the camera sees both bow and broadside.
- const lengthOnX=size.x>=size.z;
- const direction=new THREE.Vector3(lengthOnX?1.0:.85,.46,lengthOnX?.85:1.0).normalize();
- homePosition=direction.multiplyScalar(homeDistance);
- controls.target.copy(homeTarget);
- camera.position.copy(homePosition);
- controls.minDistance=Math.max(.35,sphere.radius*.20);
- controls.maxDistance=Math.max(homeDistance*5,sphere.radius*7);
- camera.near=Math.max(.01,maxDimension/2000);
- camera.far=Math.max(1000,homeDistance*18);
- camera.updateProjectionMatrix();
- controls.update();
+ cachedBox=new THREE.Box3().setFromObject(ship);
+ recalculateHome(true);
 }
+function recalculateHome(recenter){
+ if(!ship||!cachedBox)return;
+ const size=cachedBox.getSize(new THREE.Vector3());
+ const maxDimension=Math.max(size.x,size.y,size.z);
+ const longAxisX=size.x>=size.z;
+ const direction=new THREE.Vector3(longAxisX?1.0:.82,.33,longAxisX?.82:1.0).normalize();
+ // Fit by projected bounding-box corners instead of the circumscribing sphere:
+ // significantly fuller initial image, while keeping sails in view.
+ const corners=[];
+ for(const x of [cachedBox.min.x,cachedBox.max.x])
+  for(const y of [cachedBox.min.y,cachedBox.max.y])
+   for(const z of [cachedBox.min.z,cachedBox.max.z])
+    corners.push(new THREE.Vector3(x,y,z));
+ const padding=viewport.clientWidth<650?.94:.90;
+ let low=maxDimension*.20,high=maxDimension*12;
+ for(let iteration=0;iteration<32;iteration++){
+  const distance=(low+high)*.5;
+  camera.position.copy(direction).multiplyScalar(distance);
+  camera.lookAt(0,0,0);
+  camera.updateMatrixWorld();
+  const fits=corners.every(corner=>{
+   const clip=corner.clone().project(camera);
+   return clip.z<1&&clip.z>-1&&Math.abs(clip.x)<=padding&&Math.abs(clip.y)<=padding;
+  });
+  if(fits)high=distance;
+  else low=distance;
+ }
+ homeDistance=high;
+ homeTarget.set(0,0,0);
+ homePosition=direction.multiplyScalar(homeDistance);
+ controls.minDistance=Math.max(.02,maxDimension*.055);
+ controls.maxDistance=Math.max(homeDistance*7,maxDimension*9);
+ camera.near=Math.max(.005,maxDimension/8000);
+ camera.far=Math.max(1000,homeDistance*16);
+ camera.updateProjectionMatrix();
+ if(recenter){
+  controls.target.copy(homeTarget);
+  camera.position.copy(homePosition);
+  controls.update();
+ }
+}
+
 function resetCamera(){
  controls.target.copy(homeTarget);
  camera.position.copy(homePosition);
@@ -145,13 +185,157 @@ function resize(){
  camera.updateProjectionMatrix();
  renderer.setSize(width,height);
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
- if(ship)fitCamera();
+ // Responsive layout must not reset a manually positioned camera.
+ if(ship){
+  recalculateHome(!hasUserMovedCamera);
+ }
 }
 window.addEventListener('resize',resize);
 const observer=new ResizeObserver(()=>{
  if(viewport.clientWidth&&viewport.clientHeight)resize();
 });
 observer.observe(viewport);
+
+// The base mesh represents a deliberately small galleon. Stretch its overall
+// plan moderately to give the hull and open deck more generous proportions.
+// The mast/rigging geometry stays part of the same detailed GLB, never
+// replaced by the former low-detail procedural ship.
+function broadenHullSilhouette(){
+ const bounds=new THREE.Box3().setFromObject(ship);
+ const dimensions=bounds.getSize(new THREE.Vector3());
+ if(dimensions.x>dimensions.z)ship.scale.set(1.23,1.055,1.17);
+ else ship.scale.set(1.17,1.055,1.23);
+ ship.updateMatrixWorld(true);
+}
+
+// Add small physical deck props only where a real, near-horizontal deck surface
+// was found with raycasting. Never invent floating crates or an opaque fake hull.
+function furnishExistingDeck(){
+ ship.updateMatrixWorld(true);
+ const bounds=new THREE.Box3().setFromObject(ship);
+ const dim=bounds.getSize(new THREE.Vector3());
+ const length=Math.max(dim.x,dim.z),beam=Math.min(dim.x,dim.z);
+ const longX=dim.x>=dim.z;
+ const gold=new THREE.MeshStandardMaterial({color:0xa68754,metalness:.43,roughness:.49});
+ const oak=new THREE.MeshStandardMaterial({color:0x65503b,roughness:.87});
+ const iron=new THREE.MeshStandardMaterial({color:0x322d28,metalness:.34,roughness:.67});
+ const cord=new THREE.MeshStandardMaterial({color:0xb4a084,roughness:1});
+ const radius=length*.010,barrelHeight=length*.025;
+ function placeOnDeck(longitudinal,lateral,make){
+  const x=longX?bounds.getCenter(new THREE.Vector3()).x+longitudinal*length:
+   bounds.getCenter(new THREE.Vector3()).x+lateral*beam;
+  const z=longX?bounds.getCenter(new THREE.Vector3()).z+lateral*beam:
+   bounds.getCenter(new THREE.Vector3()).z+longitudinal*length;
+  const upper=bounds.min.y+dim.y*.48;
+  raycaster.set(new THREE.Vector3(x,upper,z),new THREE.Vector3(0,-1,0));
+  raycaster.far=dim.y*.46;
+  const hits=raycaster.intersectObject(ship,true);
+  const found=hits.find(hit=>{
+   const n=hit.face?.normal.clone().transformDirection(hit.object.matrixWorld);
+   return n&&n.y>.65&&hit.point.y>=bounds.min.y+dim.y*.075&&hit.point.y<=bounds.min.y+dim.y*.40;
+  });
+  if(!found)return;
+  const object=make();
+  object.position.copy(found.point);
+  deckDetails.add(object);
+ }
+ function barrel(){
+  const group=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(radius*.88,radius*.75,barrelHeight,12,1),oak);
+  body.position.y=barrelHeight/2;group.add(body);
+  for(const y of [barrelHeight*.16,barrelHeight*.80]){
+   const hoop=new THREE.Mesh(new THREE.TorusGeometry(radius*.86,radius*.075,6,18),iron);
+   hoop.rotation.x=Math.PI/2;hoop.position.y=y;group.add(hoop);
+  }
+  const lid=new THREE.Mesh(new THREE.CylinderGeometry(radius*.7,radius*.7,radius*.09,12),oak);
+  lid.position.y=barrelHeight*.97;group.add(lid);
+  return group;
+ }
+ function chest(){
+  const g=new THREE.Group(),wide=radius*2.8,high=barrelHeight*.72,depth=radius*1.9;
+  const body=new THREE.Mesh(new THREE.BoxGeometry(wide,high,depth),oak);
+  body.position.y=high/2;g.add(body);
+  for(const x of [-wide*.37,wide*.37]){
+   const trim=new THREE.Mesh(new THREE.BoxGeometry(radius*.15,high*1.05,depth*1.06),gold);
+   trim.position.set(x,high/2,0);g.add(trim);
+  }
+  for(const z of [-depth*.50,depth*.50]){
+   const band=new THREE.Mesh(new THREE.BoxGeometry(wide*1.04,radius*.10,radius*.12),gold);
+   band.position.set(0,high*.88,z);g.add(band);
+  }
+  return g;
+ }
+ function ropeCoil(){
+  const g=new THREE.Group();
+  const pts=[];
+  for(let i=0;i<100;i++){
+   const t=i/99,angle=t*Math.PI*13;
+   const rad=radius*(.11+.82*t);
+   pts.push(new THREE.Vector3(Math.cos(angle)*rad,radius*.09,Math.sin(angle)*rad));
+  }
+  const curve=new THREE.CatmullRomCurve3(pts);
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,150,radius*.10,6,false),cord));
+  return g;
+ }
+ for(const side of [-.24,.24]){
+  for(const p of [-.30,-.23,.27])placeOnDeck(p,side,barrel);
+ }
+ for(const side of [-.18,.18]){
+  for(const p of [-.36,.33])placeOnDeck(p,side,chest);
+ }
+ for(const p of [-.18,.13,.36])placeOnDeck(p,0,ropeCoil);
+
+ const shadowSpan=Math.max(dim.x,dim.y,dim.z)*.83;
+ key.shadow.camera.left=-shadowSpan;
+ key.shadow.camera.right=shadowSpan;
+ key.shadow.camera.top=shadowSpan;
+ key.shadow.camera.bottom=-shadowSpan;
+ key.shadow.camera.near=.1;
+ key.shadow.camera.far=shadowSpan*8;
+ key.shadow.camera.updateProjectionMatrix();
+ const shadowCenter=bounds.getCenter(new THREE.Vector3());
+ key.position.copy(shadowCenter).add(new THREE.Vector3(-shadowSpan*.6,shadowSpan*1.55,shadowSpan*.95));
+ key.target.position.copy(shadowCenter);
+ key.target.updateMatrixWorld();
+ ship.traverse(object=>{
+  if(!object.isMesh)return;
+  object.castShadow=true;
+  object.receiveShadow=true;
+  // Preserve existing PBR maps; improve grazing-angle wood and sail textures.
+  for(const material of Array.isArray(object.material)?object.material:[object.material]){
+   for(const name of ['map','normalMap','roughnessMap','metalnessMap']){
+    if(material?.[name])material[name].anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+   }
+  }
+ });
+ deckDetails.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+}
+
+function focusPoint(event){
+ if(!ship)return;
+ const rect=renderer.domElement.getBoundingClientRect();
+ pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
+ raycaster.setFromCamera(pointer,camera);
+ const hit=raycaster.intersectObject(ship,true)[0];
+ if(!hit)return;
+ const direction=camera.position.clone().sub(controls.target).normalize();
+ const distance=camera.position.distanceTo(controls.target);
+ const close=Math.max(controls.minDistance*1.6,distance*.48);
+ controls.target.copy(hit.point);
+ camera.position.copy(hit.point).addScaledVector(direction,close);
+ controls.update();
+ hasUserMovedCamera=true;
+}
+renderer.domElement.addEventListener('dblclick',focusPoint);
+let tapTime=0,tapX=0,tapY=0;
+renderer.domElement.addEventListener('pointerup',event=>{
+ if(event.pointerType!=='touch')return;
+ const now=performance.now();
+ const repeated=now-tapTime<310&&Math.hypot(event.clientX-tapX,event.clientY-tapY)<25;
+ tapTime=now;tapX=event.clientX;tapY=event.clientY;
+ if(repeated)focusPoint(event);
+});
+controls.addEventListener('start',()=>{hasUserMovedCamera=true});
 
 function render(){
  requestAnimationFrame(render);
@@ -177,6 +361,8 @@ try{
   }
  });
  scene.add(ship);
+ broadenHullSilhouette();
+ furnishExistingDeck();
  fitCamera();
  status.classList.add('dismissed');
  setTimeout(()=>status.remove(),360);
