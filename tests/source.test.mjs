@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
-test('minimal galley replacement and interactive controls',()=>{
+test('larger historic ship replacement and interactive controls',()=>{
  assert.match(html,/<html lang="it">/);
  assert.match(html,/galleon\.glb/);
  assert.match(html,/GLTFLoader/);
@@ -16,7 +16,7 @@ test('minimal galley replacement and interactive controls',()=>{
  assert.match(html,/broadenHullSilhouette/);
  assert.match(html,/furnishExistingDeck/);
  assert.match(html,/function focusPoint/);
- assert.match(html,/function recalculateHome/);
+ assert.match(html,/function recalculateHome/);\n assert.match(html,/Ship Pinnace/);
  assert.doesNotMatch(html,/makeHull\(\)|makeRowingDeck\(\)|24 coppie di remi/);
  assert.doesNotMatch(html,/id="views"|id="sails"|id="oars"|id="rotate"|id="labels"/);
 });
