@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#19232b">
-<meta name="description" content="Esplora liberamente in 3D un galeone storico: ruota, avvicinati e osserva scafo, alberi, vele e sartiame.">
-<title>Galeone · Visualizzatore 3D</title>
+<meta name="description" content="Esplora una nave a vela storica di circa 40 metri: tre alberi, ponti generosi, scafo e sartiame dettagliati.">
+<title>Nave 3D · Esplora il ponte</title>
 <style>
 :root{color-scheme:dark;background:#19232b;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 *{box-sizing:border-box}
@@ -34,10 +34,10 @@ button:focus-visible,a:focus-visible{outline:2px solid #f6ddaa;outline-offset:3p
 </script>
 </head>
 <body>
-<main aria-label="Visualizzatore 3D di un galeone storico">
+<main aria-label="Visualizzatore tridimensionale di una grande nave storica">
 <div id="viewport" aria-label="Modello 3D interattivo. Trascina per ruotare; usa due dita o la rotellina per ingrandire."></div>
-<div id="status" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="status-message">Caricamento del galeone…</span></div>
-<a id="credit" href="https://sketchfab.com/3d-models/nautical-galleon-870b8df2456241269cbc030a101edc50" rel="noopener noreferrer" target="_blank" title="Nautical Galleon di R-LAB · CC BY 4.0">Modello: R-LAB · CC BY 4.0</a>
+<div id="status" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="status-message">Caricamento del nuovo modello…</span></div>
+
 <button type="button" id="reset" title="Reimposta la visuale (R)" aria-label="Reimposta la visuale"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.4A8.7 8.7 0 1 1 5.3 17"/><path d="M3.4 4.5v6.2h6.2"/></svg></button>
 </main>
 <script type="module">
@@ -98,20 +98,21 @@ const pointer=new THREE.Vector2();
 const deckDetails=new THREE.Group();
 scene.add(deckDetails);
 
-// Modello completo di terze parti, non la vecchia geometria procedurale.
-// Nautical Galleon — R-LAB (rakshaan), Sketchfab, CC BY 4.0.
-// Origin asset: https://github.com/urcraft/ship-in-a-bottle/blob/main/public/models/galleon.glb
+// High-detail, real-scale historical sailing pinnace (~39.8 × 9.6 m).
+// Source: https://polyhaven.com/a/ship_pinnace
+// Authors: James Ray Cock, Nicolò Zubbini, Rico Cilliers, Yann Kervran
+// Creative Commons Zero (CC0): https://creativecommons.org/publicdomain/zero/1.0/
+// Local copy is provisioned automatically by .github/workflows/import-pinnace.yml.
 const modelUrls=[
- 'https://urcraft.github.io/ship-in-a-bottle/models/galleon.glb',
- 'https://raw.githubusercontent.com/urcraft/ship-in-a-bottle/main/public/models/galleon.glb',
- 'https://cdn.jsdelivr.net/gh/urcraft/ship-in-a-bottle@main/public/models/galleon.glb'
+ new URL('./models/pinnace.glb',window.location.href).href,
+ 'https://www.innerscene.com/api/library/sailing-pinnace-ship-1aa984c2/download'
 ];
 const loader=new GLTFLoader();
 async function loadGalleon(){
  let lastError;
  for(const url of modelUrls){
   try{return (await loader.loadAsync(url)).scene}
-  catch(error){lastError=error;console.warn('Impossibile caricare il modello da',url,error)}
+  catch(error){lastError=error;console.warn('Modello non disponibile da',url,error)}
  }
  throw lastError||new Error('Nessuna origine disponibile per il modello 3D');
 }
@@ -201,121 +202,7 @@ const observer=new ResizeObserver(()=>{
 });
 observer.observe(viewport);
 
-// The base mesh represents a deliberately small galleon. Stretch its overall
-// plan moderately to give the hull and open deck more generous proportions.
-// The mast/rigging geometry stays part of the same detailed GLB, never
-// replaced by the former low-detail procedural ship.
-function broadenHullSilhouette(){
- const bounds=new THREE.Box3().setFromObject(ship);
- const dimensions=bounds.getSize(new THREE.Vector3());
- if(dimensions.x>dimensions.z)ship.scale.multiply(new THREE.Vector3(1.23,1.055,1.17));
- else ship.scale.multiply(new THREE.Vector3(1.17,1.055,1.23));
- ship.updateMatrixWorld(true);
-}
-
-// Add small physical deck props only where a real, near-horizontal deck surface
-// was found with raycasting. Never invent floating crates or an opaque fake hull.
-function furnishExistingDeck(){
- ship.updateMatrixWorld(true);
- const bounds=new THREE.Box3().setFromObject(ship);
- const dim=bounds.getSize(new THREE.Vector3());
- const length=Math.max(dim.x,dim.z),beam=Math.min(dim.x,dim.z);
- const longX=dim.x>=dim.z;
- const gold=new THREE.MeshStandardMaterial({color:0xa68754,metalness:.43,roughness:.49});
- const oak=new THREE.MeshStandardMaterial({color:0x65503b,roughness:.87});
- const iron=new THREE.MeshStandardMaterial({color:0x322d28,metalness:.34,roughness:.67});
- const cord=new THREE.MeshStandardMaterial({color:0xb4a084,roughness:1});
- const radius=length*.010,barrelHeight=length*.025;
- function placeOnDeck(longitudinal,lateral,make){
-  const x=longX?bounds.getCenter(new THREE.Vector3()).x+longitudinal*length:
-   bounds.getCenter(new THREE.Vector3()).x+lateral*beam;
-  const z=longX?bounds.getCenter(new THREE.Vector3()).z+lateral*beam:
-   bounds.getCenter(new THREE.Vector3()).z+longitudinal*length;
-  const upper=bounds.min.y+dim.y*.48;
-  raycaster.set(new THREE.Vector3(x,upper,z),new THREE.Vector3(0,-1,0));
-  raycaster.far=dim.y*.46;
-  const hits=raycaster.intersectObject(ship,true);
-  const found=hits.find(hit=>{
-   const n=hit.face?.normal.clone().transformDirection(hit.object.matrixWorld);
-   return n&&n.y>.65&&hit.point.y>=bounds.min.y+dim.y*.075&&hit.point.y<=bounds.min.y+dim.y*.40;
-  });
-  if(!found)return;
-  const object=make();
-  object.position.copy(found.point);
-  deckDetails.add(object);
- }
- function barrel(){
-  const group=new THREE.Group();
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(radius*.88,radius*.75,barrelHeight,12,1),oak);
-  body.position.y=barrelHeight/2;group.add(body);
-  for(const y of [barrelHeight*.16,barrelHeight*.80]){
-   const hoop=new THREE.Mesh(new THREE.TorusGeometry(radius*.86,radius*.075,6,18),iron);
-   hoop.rotation.x=Math.PI/2;hoop.position.y=y;group.add(hoop);
-  }
-  const lid=new THREE.Mesh(new THREE.CylinderGeometry(radius*.7,radius*.7,radius*.09,12),oak);
-  lid.position.y=barrelHeight*.97;group.add(lid);
-  return group;
- }
- function chest(){
-  const g=new THREE.Group(),wide=radius*2.8,high=barrelHeight*.72,depth=radius*1.9;
-  const body=new THREE.Mesh(new THREE.BoxGeometry(wide,high,depth),oak);
-  body.position.y=high/2;g.add(body);
-  for(const x of [-wide*.37,wide*.37]){
-   const trim=new THREE.Mesh(new THREE.BoxGeometry(radius*.15,high*1.05,depth*1.06),gold);
-   trim.position.set(x,high/2,0);g.add(trim);
-  }
-  for(const z of [-depth*.50,depth*.50]){
-   const band=new THREE.Mesh(new THREE.BoxGeometry(wide*1.04,radius*.10,radius*.12),gold);
-   band.position.set(0,high*.88,z);g.add(band);
-  }
-  return g;
- }
- function ropeCoil(){
-  const g=new THREE.Group();
-  const pts=[];
-  for(let i=0;i<100;i++){
-   const t=i/99,angle=t*Math.PI*13;
-   const rad=radius*(.11+.82*t);
-   pts.push(new THREE.Vector3(Math.cos(angle)*rad,radius*.09,Math.sin(angle)*rad));
-  }
-  const curve=new THREE.CatmullRomCurve3(pts);
-  g.add(new THREE.Mesh(new THREE.TubeGeometry(curve,150,radius*.10,6,false),cord));
-  return g;
- }
- for(const side of [-.24,.24]){
-  for(const p of [-.30,-.23,.27])placeOnDeck(p,side,barrel);
- }
- for(const side of [-.18,.18]){
-  for(const p of [-.36,.33])placeOnDeck(p,side,chest);
- }
- for(const p of [-.18,.13,.36])placeOnDeck(p,0,ropeCoil);
-
- const shadowSpan=Math.max(dim.x,dim.y,dim.z)*.83;
- key.shadow.camera.left=-shadowSpan;
- key.shadow.camera.right=shadowSpan;
- key.shadow.camera.top=shadowSpan;
- key.shadow.camera.bottom=-shadowSpan;
- key.shadow.camera.near=.1;
- key.shadow.camera.far=shadowSpan*8;
- key.shadow.camera.updateProjectionMatrix();
- const shadowCenter=bounds.getCenter(new THREE.Vector3());
- key.position.copy(shadowCenter).add(new THREE.Vector3(-shadowSpan*.6,shadowSpan*1.55,shadowSpan*.95));
- key.target.position.copy(shadowCenter);
- key.target.updateMatrixWorld();
- ship.traverse(object=>{
-  if(!object.isMesh)return;
-  object.castShadow=true;
-  object.receiveShadow=true;
-  // Preserve existing PBR maps; improve grazing-angle wood and sail textures.
-  for(const material of Array.isArray(object.material)?object.material:[object.material]){
-   for(const name of ['map','normalMap','roughnessMap','metalnessMap']){
-    if(material?.[name])material[name].anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
-   }
-  }
- });
- deckDetails.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-}
-
+// Double click / double tap to study real deck features and bulkheads.
 function focusPoint(event){
  if(!ship)return;
  raycaster.far=Infinity;
@@ -352,7 +239,7 @@ render();
 
 try{
  ship=await loadGalleon();
- // A presentation podium included in the model export is not part of the ship.
+ // A presentation podium is never part of the ship.
  const artifacts=[];
  ship.traverse(child=>{if(/podium|pedestal|stand[_ -]?base/i.test(child.name))artifacts.push(child)});
  artifacts.forEach(child=>child.removeFromParent());
@@ -361,21 +248,23 @@ try{
   child.frustumCulled=true;
   for(const material of (Array.isArray(child.material)?child.material:[child.material])){
    if(material?.isMeshStandardMaterial||material?.isMeshPhysicalMaterial){
+    // Keep the original CC0 artist materials and PBR textures.
     material.side=THREE.DoubleSide;
+    for(const mapKey of ['map','normalMap','roughnessMap','metalnessMap']){
+     if(material[mapKey])material[mapKey].anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+    }
     material.needsUpdate=true;
    }
   }
  });
  scene.add(ship);
- broadenHullSilhouette();
  fitCamera();
- furnishExistingDeck();
  status.classList.add('dismissed');
  setTimeout(()=>status.remove(),360);
 }catch(error){
  console.error('Caricamento del galeone fallito',error);
  status.querySelector('.spinner')?.remove();
- statusMessage.textContent='Non sono riuscito a caricare il modello 3D. Riprova tra poco.';
+ statusMessage.textContent='Il nuovo modello 3D non è ancora disponibile. Riprova tra poco.';
  const retry=document.createElement('a');
  retry.id='error-link';
  retry.href=location.href;
