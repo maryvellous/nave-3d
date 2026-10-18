@@ -1,49 +1,49 @@
-# Galeone 3D
+# Nave 3D — grande nave a vela
 
-Visualizzatore essenziale per osservare e ingrandire un **vero modello 3D di galeone**, con mouse o touch. Nessuna scenografia cosmica: la reference originale riguarda la **struttura della nave** (scafo alto, più ponti, vele quadre, sartiame, poppa elaborata), non l'ambiente circostante.
+Visualizzatore web con **un modello 3D realistico e strutturalmente più grande**, al posto del precedente piccolo galeone. L'interfaccia resta volutamente minimale, con sola camera orbitale/zoom, doppio tap/clic per studiare un dettaglio, panoramica e reset.
 
-La vecchia galea procedurale con remi e decine di controlli è stata completamente eliminata.
+## Il modello nuovo
+
+**Ship Pinnace (Poly Haven)**, un'imbarcazione storica di circa **39,8 m di lunghezza e 9,6 m di larghezza**, con tre alberi, coperta lunga e dettagli modellati a scala realistica. La differenza è strutturale: non si aumenta semplicemente lo zoom e non si deforma l'asset precedente. La geometria, i ponti, il sartiame e i materiali appartengono tutti al nuovo modello.
+
+Fonte: https://polyhaven.com/a/ship_pinnace
+
+Autori: **James Ray Cock, Nicolò Zubbini, Rico Cilliers, Yann Kervran**.
+
+Licenza: **CC0 1.0** — https://creativecommons.org/publicdomain/zero/1.0/
+
+Versione web GLB con texture PBR (circa 20 MB), ottenuta da https://www.innerscene.com/tools/library/3d-parts/sailing-pinnace-ship-1aa984c2 , che dichiara di ridistribuire il modello Poly Haven in pubblico dominio.
+
+**Nota storica:** è una *pinnace* coloniale, non la riproduzione di un galeone seicentesco specifico. È stata scelta per la sua coperta più generosa e il maggior dettaglio, mantenendo l'estetica delle navi d'epoca. Non si promettono interni navigabili quando non presenti nel file 3D.
+
+## Modello ospitato localmente
+
+Il modello è caricato prioritariamente da `models/pinnace.glb`, sullo stesso dominio GitHub Pages; l'originale sul sito Innerscene è un fallback nel caso il file locale non sia ancora presente e il server permetta l'accesso CORS.
+
+L'importazione automatizzata è implementata in `.github/workflows/import-pinnace.yml` e si può avviare da **Actions → Import high-detail ship model → Run workflow**. Il workflow verifica che il file sia davvero un GLB, prima di committarlo su `main`. Per completare il deploy occorre che il workflow abbia **permessi di scrittura sui contents** e che il download termini correttamente.
+
+Il modello precedente non viene più utilizzato. Se l'importazione fallisce, il viewer presenta un messaggio d'errore, senza fingere di mostrare il nuovo modello.
 
 ## Comandi
-- Trascina (mouse o dito) per girare attorno al galeone.
-- Rotellina o pinch per zoomare; tasto destro o due dita per spostare il centro della camera.
-- Doppio clic o doppio tap su una parte della nave per avvicinarti a quel dettaglio.
-- Pulsante discreto ↶ oppure **R** per ripristinare la vista.
-- Unica scritta persistente: attribuzione richiesta dalla licenza del modello.
 
-## Modello utilizzato
+- Trascina per ruotare la telecamera.
+- Rotellina o pinch per ingrandire/ridurre.
+- Tasto destro o due dita per spostare la vista.
+- Doppio clic/doppio tap su un dettaglio per avvicinarti.
+- Piccolo pulsante ↶ oppure **R** per tornare alla vista iniziale.
 
-**Nautical Galleon** di **R-LAB (rakshaan)**, disponibile su Sketchfab: https://sketchfab.com/3d-models/nautical-galleon-870b8df2456241269cbc030a101edc50
-
-Licenza: **Creative Commons Attribution 4.0 (CC BY 4.0)** — https://creativecommons.org/licenses/by/4.0/
-
-Il GLB si trova in un altro progetto aperto, https://github.com/urcraft/ship-in-a-bottle, che ne documenta l'origine in `public/models/ATTRIBUTION.md` e lo ridistribuisce con accredito a R-LAB. La web app carica il modello da questo progetto (prima dal deploy GitHub Pages, poi dal GitHub Raw / jsDelivr come fallback). **Il file binario GLB non è vendorizzato in questo repository** e il caricamento richiede una connessione e che almeno uno di questi servizi sia disponibile. In caso di fallimento l'app mostra un errore chiaro. Per produzione autonoma e affidabilità massima conviene in seguito archiviare una copia del GLB con attribution nel repo.
-
-Il modellino non è una ricostruzione filologica certificata, ma un asset artistico esterno. Il viewer elimina eventuali podi da esposizione, **allunga moderatamente il profilo e allarga il baglio** per dare più spazio alla nave (trasformazione non uniforme dell'intero modello 3D, non nuovi ponti o nuova mesh filologica), migliora luce/ombre/filtraggio delle texture, e aggiunge piccoli oggetti tridimensionali sulle superfici di coperta rilevate tramite raycast.
-
-### Revisione 2 — proporzioni e dettagli
-- Profilo longitudinalmente più esteso (~23%), più largo (~17%) e leggermente più alto (~5,5%). Le dimensioni assolute in metri non vengono dichiarate perché il GLB originale è un asset artistico di fantasia.
-- Camera iniziale più vicina: il modello viene inquadrato con una proiezione dei vertici estremi, anziché con una sfera sovradimensionata che lo faceva sembrare piccolo.
-- Nuovi dettagli di coperta, ove presenti superfici orizzontali idonee: botti, casse e cime arrotolate.
-- Ombre morbide e resa delle texture migliorata; nessun pannello o nuovo elemento UI.
-- **Doppio clic / doppio tap** sul modello: ingrandisce la zona scelta per osservare la nave da vicino.
-- I cambi di dimensioni del browser non cancellano la vista scelta dall'utente.
-
-**Limite importante:** ingrandire/proporzionare un modello non crea magicamente nuove cabine, interni navigabili o ponti strutturali. Per una nave enormemente più grande, con spazi realmente esplorabili, occorre in futuro adottare o modellare un asset più articolato.
-
-## Avvio
-Servi la cartella con un server statico, per esempio:
+## Avvio e pubblicazione
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Apri `http://localhost:8000/`. Three.js viene caricato da jsDelivr via import map: non ci sono dipendenze di build, Node, database o API.
+Apri `http://localhost:8000/`. Il sito è statico e GitHub Pages può pubblicarlo direttamente da `main` / `root`.
 
-## Deploy GitHub Pages
-**Settings → Pages → Deploy from a branch → main → / (root)**.
-
-Il sito dovrebbe diventare disponibile all'indirizzo https://maryvellous.github.io/nave-3d/.
+URL: https://maryvellous.github.io/nave-3d/
 
 ## Verifiche
-`node --test tests/source.test.mjs` esegue controlli statici. Il workflow GitHub Actions `verify.yml` prova a caricare il GLB in Chromium e conserva screenshot desktop/mobile. Una risposta positiva del test browser è necessaria prima di dichiarare il viewer visivamente verificato.
+
+- `node --test tests/source.test.mjs`: codice, strutture essenziali, sintassi JavaScript.
+- `.github/workflows/verify.yml`: smoke test con Chromium, cattura screenshot desktop e mobile e fallisce se il modello non viene caricato.
+- I test automatici non garantiscono da soli la qualità visiva: controllare anche nel browser reale, soprattutto su telefono.
